@@ -1,0 +1,17 @@
+version: "2.0"
+services:
+    database:
+        image: "mcr.microsoft.com/mssql/server:2017-latest"
+        environment:
+            ACCEPT_EULA: "Y"
+            SA_PASSWORD: "<YourNewStrong@Passw0rd>"
+        ports:
+            - "1433:1433"
+
+    app:
+        image: "lbosqmsft/mssql-php-msphpsql"
+        volumes:
+            - ./src:/app
+        command: "php /app/test.php && bash"
+        depends_on:
+            - "database"
