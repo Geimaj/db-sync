@@ -1,13 +1,27 @@
 <?php
     require_once(__DIR__ . '/DbSync.php');
 
-    $tablesToSync = ['Person'];
+    $tablesToCheck = ['Person'];
 
-    $dbA = "mssql:host=localhost;dbname=master";
-    $dbB = "mssql:host=localhost;dbname=copy";
+    $masterDbHost = getenv('MASTER_DB_HOST');
+    $masterDbName = getenv('MASTER_DB_NAME');
+    $masterDbUser = getenv('MASTER_DB_USER');
+    $masterDbPassword = getenv('MASTER_DB_PASSWORD');
+    
+    $copyDbName = getenv('COPY_DB_NAME');
 
+    $connectionDetails = array(
+        "host" => $masterDbHost,
+        "user" => $masterDbUser,
+        "password" => $masterDbPassword
+    );
 
-    $dbSync = new DbSync($tablesToSync, $dbA, $dbB);
+    //create dbsync object
+    $dbSync = new DbSync($connectionDetails, $masterDbName, $copyDbName);
+ 
+    //get diff
+    $diff = $dbSync->getDiff($tablesToCheck);
 
-
+    echo "\ndiff:\n";
+    print_r($diff);
 ?>
