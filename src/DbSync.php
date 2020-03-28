@@ -12,7 +12,7 @@
 
         function __construct($connectionDetails, $masterDbName, $copyDbName){
             $this->masterDbName = $masterDbName;
-            $this->$copyDbName = $copyDbName;
+            $this->copyDbName = $copyDbName;
             $host = $connectionDetails["host"];
 
             $connectionOptions = array(
@@ -47,13 +47,11 @@
                 if($pk === null){
                     die("No Primary key set for {$this->masterDbName}.{$tableName}");
                 }
-                
-                // -- Get all new records
-                // $newRows = $this->getNewRows($tableName, $pk);
-                // echo "New rows: \n";
-                // print_r($newRows);
 
-                // -- Get all deleted records 
+                // Get all new records
+                $newRows = $this->getNewRows($tableName, $pk);
+
+                // Get all deleted records 
                 // $deletedRows = $this->getDeletedRows($tableName, $pk);
                 
                 // // -- Get all updated records 
@@ -122,8 +120,8 @@
         function getNewRows($tableName, $pk){
             $newRows = [];
             $query = "SELECT A.* 
-                FROM {$this->masterDbName}.{$tableName} A
-                LEFT JOIN {$this->copyDbName}.{$tableName} B
+                FROM {$this->masterDbName}.dbo.{$tableName} A
+                LEFT JOIN {$this->copyDbName}.dbo.{$tableName} B
                 ON A.{$pk} = B.{$pk} 
                 WHERE B.{$pk} IS NULL ";
             echo "running query: \n";
