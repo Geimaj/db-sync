@@ -41,12 +41,12 @@
                 //get columns for this table
                 // NOTE: we expect the tables to have the same columns across databases
                 $columns = $this->getColumns($tableName);
-                echo "\nColumns:\n";
-                print_r($columns);
 
                 //get primary key for this table
-                // $pk = $this->getPrimaryKey($tableName);
-                // echo "PK: {$pk}";
+                $pk = $this->getPrimaryKey($tableName);
+                if($pk === null){
+                    die("No Primary key set for {$this->masterDbName}.{$tableName}");
+                }
                 
                 // -- Get all new records
                 // $newRows = $this->getNewRows($tableName, $pk);
@@ -84,7 +84,6 @@
             $columns = [];
             $query = "select * from {$this->masterDbName}.INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='{$tableName}'";
             $stmt = sqlsrv_query($this->conn, $query);
-            echo "\n$query\n";
             
             if( $stmt === false ) {
                 echo "error fetching columns";
@@ -102,8 +101,9 @@
 
         function getPrimaryKey($tableName){
             $pk = null;
-            $query = "SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-                        where TABLE_NAME = {$tableName} ";
+            $query = "SELECT * 
+                      FROM {$this->masterDbName}.INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                      where TABLE_NAME = '{$tableName}' ";
             $stmt = sqlsrv_query($this->conn, $query);
 
             if($stmt === false){
