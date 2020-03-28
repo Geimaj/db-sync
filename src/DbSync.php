@@ -39,7 +39,7 @@
                 $tableDiff = array();
 
                 //get columns for this table
-                // NOTE: we expect the tables to have the same columns across databases
+                // NOTE: we expect the tables to have the same columns (AND PK) across databases
                 $columns = $this->getColumns($tableName);
 
                 //get primary key for this table
@@ -50,10 +50,13 @@
 
                 // Get all new records
                 $newRows = $this->getNewRows($tableName, $pk);
+                echo "\nnew rows: \n";
+                print_r($newRows);
 
                 // Get all deleted records 
-                // $deletedRows = $this->getDeletedRows($tableName, $pk);
-                
+                $deletedRows = $this->getDeletedRows($tableName, $pk);
+                echo "\ndeleted rows: \n";
+                print_r($deletedRows);
                 // // -- Get all updated records 
                 // $updatedRows = $this->getUpdatedRows($tableName, $pk);
 
