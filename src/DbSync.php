@@ -41,7 +41,6 @@
                 //get columns for this table
                 // NOTE: we expect the tables to have the same columns (AND PK) across databases
                 $columns = $this->getColumns($tableName);
-
                 //get primary key for this table
                 $pk = $this->getPrimaryKey($tableName);
                 if($pk === null){
@@ -57,9 +56,14 @@
                 $deletedRows = $this->getDeletedRows($tableName, $pk);
                 echo "\ndeleted rows: \n";
                 print_r($deletedRows);
-                // // -- Get all updated records 
-                // $updatedRows = $this->getUpdatedRows($tableName, $pk);
 
+                // Get all updated records 
+                $updatedRows = $this->getUpdatedRows($tableName, $pk);
+                echo "\nupdated rows: \n";
+                print_r($updatedRows);
+
+                // echo "\njson updated rows: \n";
+                // echo json_encode($updatedRows);
 
                 // -- Update  table_ts_max after sync process is successful
                 
@@ -67,14 +71,10 @@
 
                 // UPDATE  table_ts_max
                 // SET  ts_max = (SELECT max(ts) as lastTs FROM tb_x)
-                
-
-
- 
-                // print_r($columns);
 
                 if(sizeof($tableDiff) > 0){
                     array_push($difference, $tableDiff);
+                    //TODO: write table diff to file
                 }
             }
 
@@ -127,9 +127,6 @@
                 LEFT JOIN {$this->copyDbName}.dbo.{$tableName} B
                 ON A.{$pk} = B.{$pk} 
                 WHERE B.{$pk} IS NULL ";
-            echo "running query: \n";
-            echo $query;
-            echo "\n";
             $stmt = sqlsrv_query($this->conn, $query);
 
             if($stmt === false){
@@ -144,21 +141,26 @@
             return $newRows;
         }
 
+        // here we trust that the masterDB table has a row version column
+        // and that the copyDB table has a field keeping track of the highest version seen from masterDB
         function getUpdatedRows($tableName, $pk){
-            $updatedRows = array();
-            // $query = "SELECT A.*
-            // FROM (
-            //     {$this->masterDbName}.dbo.{$tableName} A
-            //     INNER JOIN {$this->copyDbName}.dbo.{$tableName} B
-            // )
-            // LEFT JOIN "
+            $updatedRows = [];
+            $query = "SELECT A.* 
+                FROM {$this->masterDbName}.dbo.{$tableName} A
+                LEFT JOIN {$this->copyDbName}.dbo.{$tableName} B
+                ON A.{$pk} = B.{$pk} 
+                WHERE A.SYNC_VERSION > B.SYNC_LAST_VERSION ";
+            $stmt = sqlsrv_query($this->conn, $query);
 
-                // SELECT A.*
-                // FROM (A.tb_x INNER JOIN B.tb_x ON A.tb_x.pkey = B.tb_x.pkey)
-                //     LEFT JOIN  table_ts_max tsMax  ON  tsMax.table_name ='tb_x' 
-                // WHERE A.ts > tsMax.ts_max
-                
+            if($stmt === false){
+                die(print_r(sqlsrv_errors(), true));
+            }
 
+            while($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)){
+                array_push($updatedRows, $row);
+            }
+
+            sqlsrv_free_stmt( $stmt);  
             return $updatedRows;
         }
 
