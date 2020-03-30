@@ -9,11 +9,11 @@ services:
       - "1433:1433"
 
   app:
-    image: "lbosqmsft/mssql-php-msphpsql"
+    build: .
     volumes:
-      - ./src:/app
+      - ./src:/app/src
       - ./output:/app/output
-    command: "php /app/test.php"
+    command: "php /app/src/test.php"
     environment:
       MASTER_DB_HOST: database
       MASTER_DB_NAME: origin
