@@ -1,7 +1,11 @@
 <?php
+
     require_once(__DIR__ . '/DbSync.php');
 
     $tablesToCheck = ['Person'];
+
+    set_time_limit(3 * 60 * 60); // 3 hours
+
 
     $masterDbHost = getenv('MASTER_DB_HOST');
     $masterDbName = getenv('MASTER_DB_NAME');
@@ -20,8 +24,6 @@
     $dbSync = new DbSync($connectionDetails, $masterDbName, $copyDbName);
  
     //get diff
-    $diff = $dbSync->getDiff($tablesToCheck);
+    $dbSync->getDiff($tablesToCheck);
 
-    echo "\ndiff:\n";
-    print_r($diff);
 ?>

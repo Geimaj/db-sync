@@ -1,9 +1,4 @@
 <?php
-
-/*
-    Input: list of table names
-*/
-
     class DbSync {
         private $masterDbName;
         private $copyDbName;
@@ -33,7 +28,6 @@
         }
 
         function getDiff($tablesToCheck){
-            $difference = array();
             foreach($tablesToCheck as $tableName){ //get table
                 echo "checking table {$tableName}";
                 $tableDiff = array();
@@ -49,21 +43,23 @@
 
                 // Get all new records
                 $newRows = $this->getNewRows($tableName, $pk);
-                echo "\nnew rows: \n";
-                print_r($newRows);
+                $tableDiff['newRows'] = $newRows;
 
                 // Get all deleted records 
                 $deletedRows = $this->getDeletedRows($tableName, $pk);
-                echo "\ndeleted rows: \n";
-                print_r($deletedRows);
-
+                $tableDiff['deletedRows'] = $deletedRows;
+                
                 // Get all updated records 
                 $updatedRows = $this->getUpdatedRows($tableName, $pk);
-                echo "\nupdated rows: \n";
-                print_r($updatedRows);
+                $tableDiff['updatedRows'] = $updatedRows;
 
-                // echo "\njson updated rows: \n";
-                // echo json_encode($updatedRows);
+                if(sizeof($tableDiff) > 0){
+                    //TODO: write table diff to file
+                    echo "write to {$tableName}.json\n";
+
+                    // print_r($tableDiff);
+                    $this->writeTableDiffToFile(__DIR__ . "/output/{$tableName}.json", $tableDiff);
+                }
 
                 // -- Update  table_ts_max after sync process is successful
                 
@@ -72,13 +68,15 @@
                 // UPDATE  table_ts_max
                 // SET  ts_max = (SELECT max(ts) as lastTs FROM tb_x)
 
-                if(sizeof($tableDiff) > 0){
-                    array_push($difference, $tableDiff);
-                    //TODO: write table diff to file
-                }
             }
+        }
 
-            return $difference;
+        function writeTableDiffToFile($path, $diff){
+            $json = json_encode($diff);
+            $file = fopen($path, "w");
+            fwrite($file, $json);
+            fclose($file);
+            // file_put_contents($path, $json);
         }
 
         function getColumns($tableName){
@@ -129,13 +127,7 @@
                 WHERE B.{$pk} IS NULL ";
             $stmt = sqlsrv_query($this->conn, $query);
 
-            if($stmt === false){
-                die(print_r(sqlsrv_errors(), true));
-            }
-
-            while($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)){
-                array_push($newRows, $row);
-            }
+            array_push($newRows, $this->getResults($stmt));
 
             sqlsrv_free_stmt( $stmt);  
             return $newRows;
@@ -152,13 +144,7 @@
                 WHERE A.SYNC_VERSION > B.SYNC_LAST_VERSION ";
             $stmt = sqlsrv_query($this->conn, $query);
 
-            if($stmt === false){
-                die(print_r(sqlsrv_errors(), true));
-            }
-
-            while($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)){
-                array_push($updatedRows, $row);
-            }
+            array_push($updatedRows, $this->getResults($stmt));
 
             sqlsrv_free_stmt( $stmt);  
             return $updatedRows;
@@ -173,17 +159,30 @@
             WHERE A.${pk} IS NULL";
 
             $stmt = sqlsrv_query($this->conn, $query);
+            
+            array_push($deletedRows, $this->getResults($stmt));
+
+            sqlsrv_free_stmt($stmt);  
+
+            return $deletedRows;
+        }
+
+        function getResults($stmt){
+            $results = array();
+
+            //make sure query was success
             if($stmt === false){
                 die(print_r(sqlsrv_errors(), true));
             }
 
+            //loop through results
             while($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)){
-                array_push($deletedRows, $row);
+                // change format of rowversion field to a hex string
+                $row['SYNC_VERSION'] = "0x" . bin2hex($row['SYNC_VERSION']);
+                array_push($results, $row);
             }
-
-            sqlsrv_free_stmt( $stmt);  
-
-            return $deletedRows;
+            
+            return $results;
         }
     }
 

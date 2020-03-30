@@ -12,6 +12,7 @@ services:
     image: "lbosqmsft/mssql-php-msphpsql"
     volumes:
       - ./src:/app
+      - ./output:/app/output
     command: "php /app/test.php"
     environment:
       MASTER_DB_HOST: database
