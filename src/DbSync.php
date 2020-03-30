@@ -1,13 +1,17 @@
 <?php
+    require_once "zip.php";
+
     class DbSync {
         private $masterDbName;
         private $copyDbName;
         private $tablesToCheck;
         private $conn;
+        private $outputDir;
 
         function __construct($connectionDetails, $masterDbName, $copyDbName){
             $this->masterDbName = $masterDbName;
             $this->copyDbName = $copyDbName;
+            $this->outputDir =  __DIR__ . "/../output";
             $host = $connectionDetails["host"];
 
             $connectionOptions = array(
@@ -27,9 +31,8 @@
             echo "bye";
         }
 
-        function getDiff($tablesToCheck){
+        function sync($tablesToCheck){
             foreach($tablesToCheck as $tableName){ //get table
-                echo "checking table {$tableName}";
                 $tableDiff = array();
 
                 //get columns for this table
@@ -54,12 +57,21 @@
                 $tableDiff['updatedRows'] = $updatedRows;
 
                 if(sizeof($tableDiff) > 0){
-                    //TODO: write table diff to file
-                    echo "write to {$tableName}.json\n";
-
-                    // print_r($tableDiff);
-                    $this->writeTableDiffToFile(__DIR__ . "/output/{$tableName}.json", $tableDiff);
+                    $this->writeTableDiffToFile("{$this->outputDir}/{$tableName}.json", $tableDiff);
                 }
+
+            }
+            // all tables have been processed into output/
+            //zip output/
+            echo "zipping output...\n";
+            $output = zipDir($this->outputDir, "{$this->outputDir}.zip");
+            echo $output;
+
+            //SFTP output.zip to server
+
+            // call web service to process zip
+
+            //update copy db
 
                 // -- Update  table_ts_max after sync process is successful
                 
@@ -68,7 +80,6 @@
                 // UPDATE  table_ts_max
                 // SET  ts_max = (SELECT max(ts) as lastTs FROM tb_x)
 
-            }
         }
 
         function writeTableDiffToFile($path, $diff){
@@ -157,9 +168,8 @@
             LEFT JOIN {$this->masterDbName}.dbo.{$tableName} A
             ON A.{$pk} = B.{$pk}
             WHERE A.${pk} IS NULL";
-
             $stmt = sqlsrv_query($this->conn, $query);
-            
+
             array_push($deletedRows, $this->getResults($stmt));
 
             sqlsrv_free_stmt($stmt);  
@@ -178,7 +188,9 @@
             //loop through results
             while($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)){
                 // change format of rowversion field to a hex string
-                $row['SYNC_VERSION'] = "0x" . bin2hex($row['SYNC_VERSION']);
+                if(isset($row['SYNC_VERSION'])){
+                    $row['SYNC_VERSION'] = "0x" . bin2hex($row['SYNC_VERSION']);
+                }
                 array_push($results, $row);
             }
             

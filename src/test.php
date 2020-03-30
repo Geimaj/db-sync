@@ -1,6 +1,6 @@
 <?php
 
-    require_once(__DIR__ . '/DbSync.php');
+    require_once('DbSync.php');
 
     $tablesToCheck = ['Person'];
 
@@ -23,7 +23,13 @@
     //create dbsync object
     $dbSync = new DbSync($connectionDetails, $masterDbName, $copyDbName);
  
-    //get diff
-    $dbSync->getDiff($tablesToCheck);
+    //do sync
+    $dbSync->sync($tablesToCheck);
+
+    echo "looping\n";
+    //infinate loop to catch input
+    while(true){
+
+    }
 
 ?>
