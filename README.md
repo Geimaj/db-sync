@@ -10,7 +10,9 @@ A tool that will output the diff between two databases given a list of tables
 
 - alter each table in copyDB by adding an integer column named `SYNC_LAST_VERSION`
 
-* modify `docker-compose.yml` with the appropriate values for
+- modify `docker-compose.yml` with the correct values for the environment variables
+
+- add your list of table names to src/start.php
 
 ## Run with docker:
 

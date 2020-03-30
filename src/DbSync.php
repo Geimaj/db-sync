@@ -1,5 +1,7 @@
 <?php
     require_once "zip.php";
+    require_once "sftp.php";
+
 
     class DbSync {
         private $masterDbName;
@@ -7,18 +9,19 @@
         private $tablesToCheck;
         private $conn;
         private $outputDir;
+        private $sftpConnectionDetails;
 
-        function __construct($connectionDetails, $masterDbName, $copyDbName){
+        function __construct($sftpConnectionDetails, $connectionDetails, $masterDbName, $copyDbName){
             $this->masterDbName = $masterDbName;
             $this->copyDbName = $copyDbName;
             $this->outputDir =  __DIR__ . "/../output";
+            $this->sftpConnectionDetails = $sftpConnectionDetails;
             $host = $connectionDetails["host"];
 
             $connectionOptions = array(
                 "Uid" => $connectionDetails["user"],
                 "PWD" => $connectionDetails["password"]
             );
-            echo "connecting to {$host}...\n";
             $this->conn = sqlsrv_connect($host, $connectionOptions);
             if($this->conn === false){
                 echo "Error connecting to DB {$host}\n";
@@ -59,15 +62,36 @@
                 if(sizeof($tableDiff) > 0){
                     $this->writeTableDiffToFile("{$this->outputDir}/{$tableName}.json", $tableDiff);
                 }
-
             }
             // all tables have been processed into output/
             //zip output/
-            echo "zipping output...\n";
-            $output = zipDir($this->outputDir, "{$this->outputDir}.zip");
-            echo $output;
+            echo "zipping...\n";
+            $zipArchive = zipDir($this->outputDir, "{$this->outputDir}.zip");
 
+            echo "uploading via SFTP...\n";
             //SFTP output.zip to server
+            $didSend = sftpSend(
+                // $this->sftpConnectionDetails["host"], 
+                // "sftp://dbsync_destination_server_1",
+                // "dbsync_destination_server_1",
+                // "destination_server",
+
+                "172.18.0.3",
+                // $this->sftpConnectionDetails["port"], 
+                21,
+                // $this->sftpConnectionDetails["remotePath"], 
+                "/",
+                // $this->sftpConnectionDetails["user"], 
+                "test",
+                // $this->sftpConnectionDetails["password"]
+                "testpassword"
+            );
+
+            if($didSend){
+                echo "\nsent\n";
+            } else {
+                echo "\nbad send\n";
+            }
 
             // call web service to process zip
 
@@ -87,7 +111,6 @@
             $file = fopen($path, "w");
             fwrite($file, $json);
             fclose($file);
-            // file_put_contents($path, $json);
         }
 
         function getColumns($tableName){

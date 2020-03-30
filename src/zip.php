@@ -60,8 +60,7 @@
         if($result !== true)
             return "Could not finalize zip archive. Err# $result";
            
-        echo "output: {$destinationFile}\n";
-        return TRUE;
+        return $destinationFile;
     }   
     
     /**

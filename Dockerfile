@@ -15,6 +15,19 @@ RUN apt-get update && apt-get install -y gnupg && \
     # optional: for unixODBC development headers
     apt-get install -y unixodbc-dev
 
-# install sqlsrv and zip
+# install sqlsrv and zip php extensions
 RUN chmod a+x /usr/local/bin/install-php-extensions && sync && \
-    install-php-extensions sqlsrv pdo_sqlsrv zip 
+    install-php-extensions sqlsrv pdo_sqlsrv zip ssh2
+
+# install php composer
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
+    php -r "if (hash_file('sha384', 'composer-setup.php') === 'e0012edf3e80b6978849f5eff0d4b4e4c79ff1609dd1e613307e16318854d24ae64f26d17af3ef0bf7cfb710ca74755a') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
+    php composer-setup.php --filename=composer --install-dir=/usr/local/bin && \
+    php -r "unlink('composer-setup.php');"
+
+
+CMD cd /app && \
+    composer install --no-dev --no-interaction --optimize-autoloader && \
+    php src/start.php
+
+
