@@ -1,42 +1,39 @@
 version: "2.0"
 services:
-  # the server with the mssql master db and mssql copy db
-  database:
-    image: "mcr.microsoft.com/mssql/server:2017-latest"
-    environment:
-      ACCEPT_EULA: "Y"
-      SA_PASSWORD: "<YourNewStrong@Passw0rd>"
-    ports:
-      - "1433:1433"
+    # the server with the mssql master db and mssql copy db
+    database:
+        image: "mcr.microsoft.com/mssql/server:2017-latest"
+        environment:
+            ACCEPT_EULA: "Y"
+            SA_PASSWORD: "<YourNewStrong@Passw0rd>"
+        ports:
+            - "1433:1433"
 
-  # the php script to create a zip archive of diff between masterDB and copyDB
-  app:
-    build: .
-    volumes:
-      - ./src:/app/src
-      - ./output:/app/output
-      - ./composer.json:/app/composer.json
-    environment:
-      MASTER_DB_HOST: database # replace with db server ip
-      MASTER_DB_NAME: origin
-      MASTER_DB_USER: sa
-      MASTER_DB_PASSWORD: <YourNewStrong@Passw0rd>
-      COPY_DB_NAME: copy
-      SFTP_HOST: destination_server # replace with sftp server ip
-      SFTP_PORT: 21
-      SFTP_REMOTE_PATH: /
-      SFTP_USER: test
-      SFTP_PASSWORD: testpassword
-    depends_on:
-      - "database"
+    # the php script to create a zip archive of diff between masterDB and copyDB
+    app:
+        build: .
+        volumes:
+            - ./src:/app/src
+            - ./output:/app/output
+            - ./composer.json:/app/composer.json
+        environment:
+            MASTER_DB_HOST: database # replace with db server ip
+            MASTER_DB_NAME: origin
+            MASTER_DB_USER: sa
+            MASTER_DB_PASSWORD: <YourNewStrong@Passw0rd>
+            COPY_DB_NAME: copy
+            SFTP_HOST: destination_server # replace with sftp server ip
+            SFTP_PORT: 22
+            SFTP_REMOTE_PATH: delta.zip
+            SFTP_USER: test
+            SFTP_PASSWORD: testpassword
+        depends_on:
+            - "database"
 
-  # the server running postgress and a SFTP server
-  destination_server:
-    # image: postgres
-    build: ./destination-server
-    restart: always
-    # ports:
-    #   - 21:21
-    #   - 21000-21010:21000-21010
-    environment:
-      POSTGRES_PASSWORD: password
+    # the server running postgress and a SFTP server
+    destination_server:
+        # image: postgres
+        build: ./destination-server
+        restart: always
+        environment:
+            POSTGRES_PASSWORD: password

@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . "/../vendor/autoload.php";
-use phpseclib\Net\SFTP;
-
+    set_include_path(get_include_path() . PATH_SEPARATOR . 'phpseclib');
+    require_once __DIR__ . "/../vendor/autoload.php";
+    use phpseclib\Net\SFTP;
   
-    function sftpSend($host, $port, $remotePath, $user, $pw){
+    function sftpSend($host, $port, $localPath, $remotePath, $user, $pw){
         try {           
             echo "connecting to {$host}:{$port}\n";
             $sftp = new SFTP($host, $port);
@@ -18,14 +18,16 @@ use phpseclib\Net\SFTP;
             die("Failed connecting to $host via SFTP. " . $e->getMessage());
             return FALSE;
         }
-        
-        if(!$sftp->put($remotePath . $fileName, $jsonPath . $fileName, SFTP::SOURCE_LOCAL_FILE)) {
-            die("WARNING! SFTP function call error: Could not copy the file:\r\n" . $jsonPath . $fileName . " to " . $remotePath . $fileName . "\r\nERROR:" . print_r($sftp->getSFTPErrors(), true));
+
+        $remoteFilePath = $remotePath;
+        $localFileToSendPath = $localPath;
+        if(!$sftp->put($remoteFilePath, $localFileToSendPath, SFTP::SOURCE_LOCAL_FILE)) {
+            die("WARNING! SFTP function call error: Could not copy the file:\r\n" . $localFileToSendPath . " to " . $remoteFilePath . "\r\nERROR:" . print_r($sftp->getSFTPErrors(), true));
             return FALSE;
         }
         
-        // Remove temp file
-        unlink ($jsonPath . $fileName);
+        // // Remove temp file
+        // unlink ($jsonPath . $fileName);
         return TRUE;
         
     }

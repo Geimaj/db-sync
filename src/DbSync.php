@@ -71,20 +71,12 @@
             echo "uploading via SFTP...\n";
             //SFTP output.zip to server
             $didSend = sftpSend(
-                // $this->sftpConnectionDetails["host"], 
-                // "sftp://dbsync_destination_server_1",
-                // "dbsync_destination_server_1",
-                // "destination_server",
-
-                "172.18.0.3",
-                // $this->sftpConnectionDetails["port"], 
-                21,
-                // $this->sftpConnectionDetails["remotePath"], 
-                "/",
-                // $this->sftpConnectionDetails["user"], 
-                "test",
-                // $this->sftpConnectionDetails["password"]
-                "testpassword"
+                $this->sftpConnectionDetails["host"], 
+                $this->sftpConnectionDetails["port"], 
+                $zipArchive,
+                $this->sftpConnectionDetails["remotePath"], 
+                $this->sftpConnectionDetails["user"], 
+                $this->sftpConnectionDetails["password"]
             );
 
             if($didSend){
