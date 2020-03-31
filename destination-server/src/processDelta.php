@@ -2,6 +2,14 @@
 
 function unzipYo($pathToZip, $unzipPath){
     $zip = new ZipArchive;
+    $res = $zip->open($pathToZip);
+    if($res === TRUE){
+        $zip->extractTo($unzipPath);
+        $zip->close();
+    } else {
+//         exit("Error unpacking {$file_to_zip} Check that it is a valid .xlsx file.");
+        echo "\nerror zipping\n";
+    }
 }
 
 
@@ -15,18 +23,5 @@ function unzipYo($pathToZip, $unzipPath){
 
         // print_r($files);
     }
-
-
-//     function unzip($file_to_zip, $savedir) {
-//          $zip = new ZipArchive;
-//          $res = $zip->open($file_to_zip);
-//          if ($res === TRUE) {
-//              $zip->extractTo($savedir);
-//              $zip->close();
-//          } 
-//          else {
-//              exit("Error unpacking '$file_to_zip'. Check that it is a valid .xlsx file.");
-//          }
-//     }
 
 ?>
