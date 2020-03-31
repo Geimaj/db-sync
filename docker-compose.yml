@@ -27,6 +27,7 @@ services:
             SFTP_REMOTE_PATH: delta.zip
             SFTP_USER: test
             SFTP_PASSWORD: testpassword
+            PROCESS_OUTPUT_URL: http://destination_server:5050/webService.php
         depends_on:
             - "database"
 
@@ -35,5 +36,10 @@ services:
         # image: postgres
         build: ./destination-server
         restart: always
+        volumes:
+            - ./destination-server/src:/sync-app
+            # - ./destination-server/php.ini:/etc/php7/php.ini
         environment:
             POSTGRES_PASSWORD: password
+        ports:
+            - 5050:5050

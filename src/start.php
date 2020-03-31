@@ -18,7 +18,10 @@
     $sftpPort = getenv('SFTP_PORT');
     $sftpRemotePath = getenv('SFTP_REMOTE_PATH');
     $sftpUser = getenv('SFTP_USER');;
-    $sftpPassword = getenv('SFTP_PASSWORD');; 
+    $sftpPassword = getenv('SFTP_PASSWORD');
+
+    $proccessOutputUrl = getenv('PROCESS_OUTPUT_URL');
+
 
     $dbConnectionDetails = array(
         "host" => $masterDbHost,
@@ -38,7 +41,7 @@
     $dbSync = new DbSync($sftpConnectionDetails, $dbConnectionDetails, $masterDbName, $copyDbName);
  
     // do sync
-    $dbSync->sync($tablesToCheck);
+    $dbSync->sync($tablesToCheck, $proccessOutputUrl);
 
     // echo "looping\n";
     // //infinate loop to catch input

@@ -6,11 +6,15 @@ COPY entrypoint.sh /entrypoint.sh
 # install php to process script and setup sftp
 RUN apk update && \
     apk upgrade && \
-    apk add php7 openssh-server && \
-    # create user
+    apk add vim openssh-server php7 php7-openssl php7-dev php7-zip php7-pear \
+    libzip libzip-dev build-base && \ 
+    pecl channel-update pecl.php.net && \
+    pecl install zip && \
+    # create user and setup sftp dir
     mkdir -p /ftp/test && \
     echo -e "testpassword\ntestpassword" | adduser -h /ftp/test -s /bin/bash test && \
-    chown test:test /ftp/test
+    chown test:test /ftp/test 
 
 EXPOSE 22
+EXPOSE 5050
 ENTRYPOINT /entrypoint.sh

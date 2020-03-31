@@ -34,7 +34,7 @@
             echo "bye";
         }
 
-        function sync($tablesToCheck){
+        function sync($tablesToCheck,$proccessOutputUrl){
             foreach($tablesToCheck as $tableName){ //get table
                 $tableDiff = array();
 
@@ -81,20 +81,26 @@
 
             if($didSend){
                 echo "\nsent\n";
-            } else {
-                echo "\nbad send\n";
-            }
-
-            // call web service to process zip
-
-            //update copy db
-
-                // -- Update  table_ts_max after sync process is successful
                 
-                //write changes to copy db
-
-                // UPDATE  table_ts_max
-                // SET  ts_max = (SELECT max(ts) as lastTs FROM tb_x)
+                // call web service to process zip
+                $response = file_get_contents("{$proccessOutputUrl}?zipPath={$zipArchive}");
+                if($response === "OK"){
+                    //update copy db
+                    echo "\ngot repose OK: time to update copy DB\n";
+                    // -- Update  table_ts_max after sync process is successful
+                    //write changes to copy db
+                    
+                    // UPDATE  table_ts_max
+                    // SET  ts_max = (SELECT max(ts) as lastTs FROM tb_x)
+                } else {
+                    //the request to process the data was unsuccessful. DO NOT update copy db
+                    die("remote server failed to proccess data. ");
+                }
+                
+                
+            } else {
+                die('error uploading via SFTP ');
+            }
 
         }
 

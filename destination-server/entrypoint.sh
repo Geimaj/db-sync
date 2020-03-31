@@ -10,4 +10,6 @@ if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
 fi
 
 # start sshd
-exec /usr/sbin/sshd -D -e -c /etc/ssh/sshd_config
+/usr/sbin/sshd -D -e -c /etc/ssh/sshd_config &
+# start php web service 
+php -S 0.0.0.0:5050 /sync-app/webService.php 
