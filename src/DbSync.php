@@ -91,6 +91,8 @@
                     foreach($dbDiff as $tableName => $tableDiff){
                         //insert new rows
                         $this->insertNewRows($tableName, $tableDiff['newRows'][0]);
+                        //update updated rows
+                        $this->updateRows($tableName, $tableDiff['updatedRows'][0]);
 
                     }
                     // -- Update  table_ts_max after sync process is successful
@@ -109,8 +111,45 @@
 
         }
 
+        function updateRows($tableName, $updatedRows){
+            echo "writing updated rows to copy db";
+            print_r($updatedRows);
+            //find primary key for table
+            $pk = $this->getPrimaryKey($tableName);
+            foreach($updatedRows as $row){
+                // build string of set name=val
+                $setString = "set ";
+                $syncVersion = $row['SYNC_VERSION'];
+                unset($row['SYNC_VERSION']);
+                // $row["SYNC_LAST_VERSION"] = hexdec($syncVersion);
+                $row["SYNC_LAST_VERSION"] = $syncVersion;
+
+                foreach($row as $name => $val){
+                    $wrappedVal = $val;
+                    //wrap the strings in ''
+                    if($name !== "SYNC_LAST_VERSION" && is_string($val)){
+                        $wrappedVal = "'{$val}'";
+                    }
+                    $setString = "{$setString} {$name}={$wrappedVal}, ";
+                }
+                //remove trailing comma and space
+                $setString = substr($setString, 0, -2);
+
+                $pkVal = $row[$pk];
+                $query = "update {$this->copyDbName}.dbo.{$tableName} {$setString} where {$pk} = {$pkVal};";
+
+                $result = sqlsrv_query($this->conn, $query);
+                if(!$result){
+                    // die("error running query against copy DB: \n" . $query);
+                    die(print_r(sqlsrv_errors()));
+
+                }
+
+                sqlsrv_free_stmt($result);
+            }
+        }
+
         function insertNewRows($tableName, $newRows){
-            print_r($newRows);
             foreach($newRows as $row){
                 //get column names
                 $syncVersion = $row['SYNC_VERSION'];

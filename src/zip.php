@@ -63,37 +63,5 @@
         return $destinationFile;
     }   
     
-    /**
-     * unzip method
-     *
-     * @param $file_to_zip
-     *         $save_dir
-     *
-     */
-    function unzip($file_to_zip, $savedir) {
-         $zip = new ZipArchive;
-         $res = $zip->open($file_to_zip);
-         if ($res === TRUE) {
-             $zip->extractTo($savedir);
-             $zip->close();
-         } 
-         else {
-             exit("Error unpacking '$file_to_zip'. Check that it is a valid .xlsx file.");
-         }
-    }
-    
-    /**
-     * Recursively create parts of a long directory path that do not exist in the file system
-     * @param string $path
-     * @return bool TRUE on success, FALSE on error
-     */
-    function createPath($path) {
-        if (is_dir($path))
-            return true;
- 
-        $prev_path = dirname($path);
-        $return = createPath($prev_path);
-        return ($return && is_writable($prev_path)) ? mkdir($path, 0770) : false;
-    }
 
 ?>

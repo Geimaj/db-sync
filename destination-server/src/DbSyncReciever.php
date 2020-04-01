@@ -34,7 +34,7 @@
                 //insert new rows
                 $this->insertNewRows($tableName, $json["newRows"][0]);
                 //update updated rows
-                // $this->updateRows($tableName, $json["updatedRows"][0]);
+                $this->updateRows($tableName, $json["updatedRows"][0]);
                 // //delete deleted rows
                 // deleteRows($json["deletedRows"]);
 
@@ -61,12 +61,61 @@
             return implode(", ", array_values($row));
         }
 
+        function getPrimaryKey($tableName){
+            $query = "select attname
+            from pg_index i
+            join pg_attribute a 
+            on a.attrelid = i.indrelid
+            and a.attnum = ANY(i.indkey)
+            where i.indrelid = '{$tableName}'::regclass
+            and i.indisprimary;";
+
+            $result = pg_query($this->conn, $query);
+            if(!$result){
+                die(pg_last_error($this->conn));
+            }
+            
+            $pk = pg_fetch_row($result)[0];
+            pg_free_result($result);
+            return $pk;
+        }
+
         function insertNewRows($table, $rows){
             foreach($rows as $row){
                 $columns = $this->getColumnNames($row);
                 $values = $this->getValues($row);
 
                 $query = "insert into {$table} ({$columns}) values ({$values});";
+
+                $result = pg_query($this->conn, $query);
+                if(!$result){
+                    die(pg_last_error($this->conn));
+                }
+
+                pg_free_result($result);
+            }
+        }
+
+        function updateRows($table, $rows){
+            //find primary key for table
+            $pk = $this->getPrimaryKey($table);
+            foreach($rows as $row){
+                // build string of set name=val
+                $setString = "set ";
+                $row["SYNC_VERSION"] = hexdec($row['SYNC_VERSION']);
+                foreach($row as $name => $val){
+                    $wrappedVal = $val;
+                    //wrap the strings in ''
+                    if($name !== "SYNC_VERSION" && is_string($val)){
+                        $wrappedVal = "'{$val}'";
+                    }
+                    $setString = "{$setString} {$name}={$wrappedVal}, ";
+                }
+                //remove trailing comma and space
+                $setString = substr($setString, 0, -2);
+
+                $pkVal = $row[$pk];
+                $query = "update {$table} {$setString} where {$pk} = {$pkVal}";
 
                 $result = pg_query($this->conn, $query);
                 if(!$result){
