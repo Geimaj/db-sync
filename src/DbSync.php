@@ -94,7 +94,7 @@
                     // SET  ts_max = (SELECT max(ts) as lastTs FROM tb_x)
                 } else {
                     //the request to process the data was unsuccessful. DO NOT update copy db
-                    die("remote server failed to proccess data. ");
+                    die("remote server failed to proccess data. {$response}");
                 }
                 
                 

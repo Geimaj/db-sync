@@ -7,7 +7,6 @@
         try {           
             echo "connecting to {$host}:{$port}\n";
             $sftp = new SFTP($host, $port);
-            echo "loggin in with {$user}:{$pw}\n";
             if (!$sftp->login($user, $pw)) {
                 // TODO: get Log:err code 
                 // NOTE: I have code for Log::err below… 

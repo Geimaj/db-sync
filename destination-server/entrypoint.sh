@@ -9,6 +9,8 @@ if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
     ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ''
 fi
 
+# start postgres
+ echo -e "postgres \n" | su postgres & 
 # start sshd
 /usr/sbin/sshd -D -e -c /etc/ssh/sshd_config &
 # start php web service 

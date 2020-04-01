@@ -33,13 +33,18 @@ services:
 
     # the server running postgress and a SFTP server
     destination_server:
-        # image: postgres
         build: ./destination-server
         restart: always
         volumes:
             - ./destination-server/src:/sync-app
-            # - ./destination-server/php.ini:/etc/php7/php.ini
         environment:
+            # for postgress docker config
             POSTGRES_PASSWORD: password
+            # for target postgress server
+            TARGET_POSTGRES_HOST: 127.0.0.1
+            TARGET_POSTGRES_DB_NAME: publishing
+            TARGET_POSTGRES_USER: postgres
+            TARGET_POSTGRES_PASSWORD: password
         ports:
             - 5050:5050
+            - 5432:5432
