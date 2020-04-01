@@ -30,10 +30,11 @@
                 $filePath = "{$unzipPath}/{$file}";
                 $fileContents = file_get_contents($filePath);
                 $json = json_decode($fileContents, true);
+                $tableName = substr($file, 0, strpos($file, '.json'));
                 //insert new rows
-                $this->insertNewRows(substr($file, 0, strpos($file, '.json')), $json["newRows"][0]);
+                $this->insertNewRows($tableName, $json["newRows"][0]);
                 //update updated rows
-                // updateRows($json["updatedRows"]);
+                // $this->updateRows($tableName, $json["updatedRows"][0]);
                 // //delete deleted rows
                 // deleteRows($json["deletedRows"]);
 

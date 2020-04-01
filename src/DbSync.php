@@ -35,6 +35,7 @@
         }
 
         function sync($tablesToCheck,$proccessOutputUrl){
+            $dbDiff = array();
             foreach($tablesToCheck as $tableName){ //get table
                 $tableDiff = array();
 
@@ -61,6 +62,7 @@
 
                 if(sizeof($tableDiff) > 0){
                     $this->writeTableDiffToFile("{$this->outputDir}/{$tableName}.json", $tableDiff);
+                    $dbDiff[$tableName] = $tableDiff;
                 }
             }
             // all tables have been processed into output/
@@ -80,20 +82,23 @@
             );
 
             if($didSend){
-                echo "\nsent\n";
-                
                 // call web service to process zip
                 $response = file_get_contents("{$proccessOutputUrl}?zipPath={$zipArchive}");
                 if($response === "OK"){
                     //update copy db
                     echo "\ngot repose OK: time to update copy DB\n";
-                    // -- Update  table_ts_max after sync process is successful
                     //write changes to copy db
+                    foreach($dbDiff as $tableName => $tableDiff){
+                        //insert new rows
+                        $this->insertNewRows($tableName, $tableDiff['newRows'][0]);
+
+                    }
+                    // -- Update  table_ts_max after sync process is successful
                     
                     // UPDATE  table_ts_max
                     // SET  ts_max = (SELECT max(ts) as lastTs FROM tb_x)
                 } else {
-                    //the request to process the data was unsuccessful. DO NOT update copy db
+                    // the request to process the data was unsuccessful. DO NOT update copy db
                     die("remote server failed to proccess data. {$response}");
                 }
                 
@@ -102,6 +107,34 @@
                 die('error uploading via SFTP ');
             }
 
+        }
+
+        function insertNewRows($tableName, $newRows){
+            print_r($newRows);
+            foreach($newRows as $row){
+                //get column names
+                $syncVersion = $row['SYNC_VERSION'];
+                unset($row['SYNC_VERSION']);
+                $row['SYNC_LAST_VERSION'] = $syncVersion;
+                $columnNames = implode(', ',array_keys($row));
+
+                //get values
+                foreach($row as $i => $value){
+                    if($i !== "SYNC_LAST_VERSION" && is_string($row[$i])){
+                        $row[$i] = "'{$value}'";
+                    }
+                }
+                $values = implode(', ', array_values($row));
+
+                $query = "insert into {$this->copyDbName}.dbo.{$tableName}
+                        ($columnNames)
+                        values($values)";
+                $stmt = sqlsrv_query($this->conn, $query);
+                if($stmt === FALSE){
+                    die("error running query against copy DB: \n" . $query);
+                }
+                sqlsrv_free_stmt( $stmt);  
+            }
         }
 
         function writeTableDiffToFile($path, $diff){
