@@ -1,6 +1,6 @@
 <?php
     set_include_path(get_include_path() . PATH_SEPARATOR . 'phpseclib');
-    require_once __DIR__ . "/../vendor/autoload.php";
+    require_once __DIR__ . "/vendor/autoload.php";
     use phpseclib\Net\SFTP;
   
     function sftpSend($host, $port, $localPath, $remotePath, $user, $pw){

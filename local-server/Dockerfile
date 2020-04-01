@@ -26,8 +26,8 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     php -r "unlink('composer-setup.php');"
 
 
-CMD cd /app && \
+CMD cd /app/src && \
     composer install --no-dev --no-interaction --optimize-autoloader && \
-    php src/start.php
+    php start.php
 
 

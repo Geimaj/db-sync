@@ -18,7 +18,7 @@
     require_once "sftp.php";
 
 
-    class DbSync {
+    class DbSyncPublisher {
         private $masterDbName;
         private $copyDbName;
         private $tablesToCheck;
@@ -32,7 +32,8 @@
             $this->outputDir =  __DIR__ . "/../output";
             $this->sftpConnectionDetails = $sftpConnectionDetails;
             $host = $connectionDetails["host"];
-
+            
+            //connect to sqlsrv
             $connectionOptions = array(
                 "Uid" => $connectionDetails["user"],
                 "PWD" => $connectionDetails["password"]
@@ -42,11 +43,15 @@
                 echo "Error connecting to DB {$host}\n";
                 die( print_r( sqlsrv_errors(), true));
             }
+
+            //make output dir if it doesn't exist
+            if(!file_exists($this->outputDir)){
+                mkdir($this->outputDir);
+            }
         }
 
         function __destruct(){
             sqlsrv_close($this->conn);
-            echo "bye";
         }
 
         function sync($tablesToCheck,$proccessOutputUrl){
@@ -121,13 +126,10 @@
         }
 
         function deleteRows($tableName, $rows){
-            echo "\nDeleting rows: \n";
             $pk = $this->getPrimaryKey($tableName);
             foreach($rows as $row){
                 $pkVal = $row[$pk];
                 $query = "delete from {$this->copyDbName}.dbo.{$tableName} where {$pk} = {$pkVal}";
-
-                echo "\n{$query}\n";
 
                 $result = sqlsrv_query($this->conn, $query);
                 if(!$result){

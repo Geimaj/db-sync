@@ -1,6 +1,6 @@
 <?php
 
-    require_once('DbSync.php');
+    require_once(__DIR__ . '/DbSyncPublisher.php');
 
     $tablesToCheck = ['Person'];
 
@@ -38,15 +38,9 @@
     );
 
     //create dbsync object
-    $dbSync = new DbSync($sftpConnectionDetails, $dbConnectionDetails, $masterDbName, $copyDbName);
+    $dbSync = new DbSyncPublisher($sftpConnectionDetails, $dbConnectionDetails, $masterDbName, $copyDbName);
  
     // do sync
     $dbSync->sync($tablesToCheck, $proccessOutputUrl);
-
-    // echo "looping\n";
-    // //infinate loop to catch input
-    // while(true){
-
-    // }
 
 ?>

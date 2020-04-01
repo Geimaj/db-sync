@@ -11,18 +11,16 @@ services:
 
     # the php script to create a zip archive of diff between masterDB and copyDB
     app:
-        build: .
+        build: ./local-server
         volumes:
-            - ./src:/app/src
-            - ./output:/app/output
-            - ./composer.json:/app/composer.json
+            - ./local-server/src:/app/src
         environment:
-            MASTER_DB_HOST: database # replace with db server ip
+            MASTER_DB_HOST: database
             MASTER_DB_NAME: origin
             MASTER_DB_USER: sa
             MASTER_DB_PASSWORD: <YourNewStrong@Passw0rd>
             COPY_DB_NAME: copy
-            SFTP_HOST: destination_server # replace with sftp server ip
+            SFTP_HOST: destination_server
             SFTP_PORT: 22
             SFTP_REMOTE_PATH: delta.zip
             SFTP_USER: test
@@ -32,6 +30,8 @@ services:
             - "database"
 
     # the server running postgress and a SFTP server
+    # this also has a web service running to trigger the
+    # processing of SFTP upload into postgres DB
     destination_server:
         build: ./destination-server
         restart: always

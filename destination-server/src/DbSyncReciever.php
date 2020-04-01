@@ -11,6 +11,7 @@
     /tmp/delta is removed after processing to avoid stale data
     */
     require_once __DIR__ . "/unzip.php";
+    set_time_limit(3 * 60 * 60); // 3 hours
 
 
     class DbSyncReciever {
