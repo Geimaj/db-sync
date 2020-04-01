@@ -1,4 +1,15 @@
 <?php
+    /*
+    This class is used to update the postgres db.
+    processDelta() is called from a web service
+    which instructs us to unzip a file, loop through the contents
+    and apply the changes found in `tablename`.json
+    to the postgres DB.
+
+    When the processDelta() is called we expect there to be a file
+    at $pathToZip. We extract this file to /tmp/delta/ as an intermediary for processing. 
+    /tmp/delta is removed after processing to avoid stale data
+    */
     require_once __DIR__ . "/unzip.php";
 
 
@@ -36,8 +47,9 @@
                 //update updated rows
                 $this->updateRows($tableName, $json["updatedRows"][0]);
                 // //delete deleted rows
-                // deleteRows($json["deletedRows"]);
+                $this->deleteRows($tableName, $json["deletedRows"][0]);
 
+                //delete json file after it has been processed
                 unlink($filePath);
             }
         }
@@ -116,6 +128,21 @@
 
                 $pkVal = $row[$pk];
                 $query = "update {$table} {$setString} where {$pk} = {$pkVal}";
+
+                $result = pg_query($this->conn, $query);
+                if(!$result){
+                    die(pg_last_error($this->conn));
+                }
+
+                pg_free_result($result);
+            }
+        }
+
+        function deleteRows($tableName, $rows){
+            $pk = $this->getPrimaryKey($tableName);
+            foreach($rows as $row){
+                $pkVal = $row[$pk];
+                $query = "delete from {$tableName} where {$pk} = {$pkVal};";
 
                 $result = pg_query($this->conn, $query);
                 if(!$result){

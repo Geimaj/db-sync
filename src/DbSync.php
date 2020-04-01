@@ -1,4 +1,19 @@
 <?php
+    /*
+        This class is used to find the difference between two mssql databases.
+        One database is the master and the other is a copy, meant to replicate the data
+        in a postgres DB on a remote server.
+
+        A delta is created for each table as `tablename`.json and then zipped together.
+        The zip file is uploaded to an SFTP server and then a web service is called 
+        to start processing the newly uploaded zip fle.
+
+        Once an OK response is recieved from the webservice this class will apply all the changes 
+        to copyDB. CopyDB is meant to replicate the remote postgres DB so copyDB will not get updated 
+        unless an OK response is recieved from the webservice, indicating the changes were applied to
+        the postgres DB. 
+
+    */
     require_once "zip.php";
     require_once "sftp.php";
 
@@ -93,27 +108,37 @@
                         $this->insertNewRows($tableName, $tableDiff['newRows'][0]);
                         //update updated rows
                         $this->updateRows($tableName, $tableDiff['updatedRows'][0]);
-
+                        //delete deleted rows
+                        $this->deleteRows($tableName, $tableDiff['deletedRows'][0]);
                     }
-                    // -- Update  table_ts_max after sync process is successful
-                    
-                    // UPDATE  table_ts_max
-                    // SET  ts_max = (SELECT max(ts) as lastTs FROM tb_x)
                 } else {
                     // the request to process the data was unsuccessful. DO NOT update copy db
                     die("remote server failed to proccess data. {$response}");
                 }
-                
-                
             } else {
                 die('error uploading via SFTP ');
             }
+        }
 
+        function deleteRows($tableName, $rows){
+            echo "\nDeleting rows: \n";
+            $pk = $this->getPrimaryKey($tableName);
+            foreach($rows as $row){
+                $pkVal = $row[$pk];
+                $query = "delete from {$this->copyDbName}.dbo.{$tableName} where {$pk} = {$pkVal}";
+
+                echo "\n{$query}\n";
+
+                $result = sqlsrv_query($this->conn, $query);
+                if(!$result){
+                    die(print_r(sqlsrv_errors()));
+                }
+
+                sqlsrv_free_stmt($result);
+            }
         }
 
         function updateRows($tableName, $updatedRows){
-            echo "writing updated rows to copy db";
-            print_r($updatedRows);
             //find primary key for table
             $pk = $this->getPrimaryKey($tableName);
             foreach($updatedRows as $row){
