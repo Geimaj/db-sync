@@ -2,7 +2,7 @@
 
     require_once(__DIR__ . '/DbSyncPublisher.php');
 
-    $tablesToCheck = ['Person'];
+    $tablesToCheck = ['Person', 'Thing'];
 
     set_time_limit(3 * 60 * 60); // 3 hours
 

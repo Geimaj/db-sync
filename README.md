@@ -11,7 +11,7 @@ The copy db is used as a local representation of the remote postgres db so we ha
 ## Before Running:
 
 -   create a list of tables to syncronize
--   alter each table from the list in MasterDB to have a rowversion column named `SYNC_VERSION`
+-   alter each table from the list in MasterDB to have a rowversion column named `SYNC_VERSION` and ensure it has a primary key
 -   create CopyDB as a clone of all the tables in the list from the masterDB
 -   alter each table in copyDB by adding an integer column named `SYNC_LAST_VERSION` and remove rowversion column 'SYNC_VERSION'
 -   add your list of table names to local-server/src/start.php
